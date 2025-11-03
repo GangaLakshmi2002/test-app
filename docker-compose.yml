@@ -1,44 +1,98 @@
 version: '3.9'
+
 services:
   frontend:
-    build:
-      context: .
-      dockerfile: dockerfiles/frontend.dockerfile
-      args:
-        ENVIRONMENT: development # Change to 'production' for production builds
-    container_name: ranizouaoui/task_frontend:latest
-    image: ranizouaoui/task_frontend:latest
+    image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/frontend:${IMAGE_TAG:-latest}
+    container_name: frontend
     ports:
       - '3000:3000'
     depends_on:
       - backend
     environment:
-      - NEXT_PUBLIC_API_URL=http://localhost:3000
+      - NEXT_PUBLIC_API_URL=http://backend:5000
+    restart: unless-stopped
+    networks:
+      - app-network
 
   backend:
-    build:
-      context: .
-      dockerfile: dockerfiles/backend.dockerfile
-    container_name: ranizouaoui/task_backend:latest
-    image: ranizouaoui/task_backend:latest
+    image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/backend:${IMAGE_TAG:-latest}
+    container_name: backend
     ports:
-      - "5000:5000"
+      - '5000:5000'
     env_file:
       - ./backend/.env.production
     depends_on:
       - postgres
+    restart: unless-stopped
+    networks:
+      - app-network
 
   postgres:
-    container_name: ranizouaoui/postgres:latest
-    image: postgres:13
+    image: postgres:13-alpine
+    container_name: postgres
     environment:
-      POSTGRES_USER: taskmanager
-      POSTGRES_PASSWORD: taskmanager
-      POSTGRES_DB: taskmanager
+      POSTGRES_USER: ${POSTGRES_USER:-taskmanager}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-taskmanager}
+      POSTGRES_DB: ${POSTGRES_DB:-taskmanager}
     ports:
       - '5432:5432'
     volumes:
-      - ./postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - app-network
 
 volumes:
   postgres_data:
+
+networks:
+  app-network:
+    driver: bridge
+
+
+
+
+# version: '3.9'
+# services:
+#   frontend:
+#     build:
+#       context: .
+#       dockerfile: dockerfiles/frontend.dockerfile
+#       args:
+#         ENVIRONMENT: development # Change to 'production' for production builds
+#     container_name: ranizouaoui/task_frontend:latest
+#     image: ranizouaoui/task_frontend:latest
+#     ports:
+#       - '3000:3000'
+#     depends_on:
+#       - backend
+#     environment:
+#       - NEXT_PUBLIC_API_URL=http://localhost:3000
+
+#   backend:
+#     build:
+#       context: .
+#       dockerfile: dockerfiles/backend.dockerfile
+#     container_name: ranizouaoui/task_backend:latest
+#     image: ranizouaoui/task_backend:latest
+#     ports:
+#       - "5000:5000"
+#     env_file:
+#       - ./backend/.env.production
+#     depends_on:
+#       - postgres
+
+#   postgres:
+#     container_name: ranizouaoui/postgres:latest
+#     image: postgres:13
+#     environment:
+#       POSTGRES_USER: taskmanager
+#       POSTGRES_PASSWORD: taskmanager
+#       POSTGRES_DB: taskmanager
+#     ports:
+#       - '5432:5432'
+#     volumes:
+#       - ./postgres_data:/var/lib/postgresql/data
+
+# volumes:
+#   postgres_data:
