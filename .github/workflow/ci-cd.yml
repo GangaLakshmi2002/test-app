@@ -1,4 +1,4 @@
-name: Deploy MERN App using github actions cicd
+name: Deploy MERN App using github actions
 
 on:
  workflow_dispatch:
