@@ -98,8 +98,8 @@ jobs:
 
             echo "🚀 Deploying containers..."
             cd $PROJECT_DIR
-            sudo docker-compose pull
-            sudo docker-compose up -d --build
+            docker-compose pull
+            docker-compose up -d --build
 
             echo "🧹 Cleaning unused Docker data..."
             sudo docker system prune -f
