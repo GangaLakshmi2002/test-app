@@ -31,10 +31,10 @@ jobs:
           docker build -t ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/semicon-backend:latest ./backend
           docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/semicon-backend:latest
 
-      - name: Build and Push Frontend Image
-        run: |
-          docker build -t ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/frontend:latest -f ./dockerfiles/frontend.dockerfile .
-          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/frontend:latest
+      # - name: Build and Push Frontend Image
+      #   run: |
+      #     docker build -t ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/frontend:latest -f ./dockerfiles/frontend.dockerfile .
+      #     docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/frontend:latest
 
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v0.1.7
@@ -59,7 +59,7 @@ jobs:
 
               echo "📂 Cloning project..."
               git clone https://github.com/GangaLakshmi2002/test-app.git $PROJECT_DIR
-              
+
             else
               echo "✅ Project already exists, pulling latest changes"
               cd $PROJECT_DIR && git pull origin main
