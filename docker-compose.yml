@@ -15,7 +15,7 @@ services:
       - app-network
 
   backend:
-    image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/backend:${IMAGE_TAG:-latest}
+    image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/semicon-backend:${IMAGE_TAG:-latest}
     container_name: backend
     ports:
       - '5000:5000'
