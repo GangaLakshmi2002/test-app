@@ -33,8 +33,7 @@ jobs:
 
       - name: Build and Push Frontend Image
         run: |
-          docker build -t ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/frontend:latest -f dockerfiles/frontend.dockerfile \
-           --build-arg ENVIRONMENT=development .
+          docker build -t ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/frontend:latest  ./frontend
           docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/frontend:latest
 
       - name: Deploy to EC2
