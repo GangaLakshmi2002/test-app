@@ -1,9 +1,11 @@
 name: Deploy MERN App using github actions
 
 on:
-  push:
-    branches:
-      - main
+ workflow_dispatch:
+ push:
+   branches: [main, master]
+ pull_request:
+   branches: [main, master]
 
 jobs:
   deploy:
