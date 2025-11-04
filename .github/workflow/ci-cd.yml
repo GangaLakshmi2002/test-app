@@ -1,22 +1,20 @@
-name: Deploy MERN App using github actions cicd
+name: Deploy MERN App using GitHub Actions
 
 on:
- workflow_dispatch:
- push:
-   branches: [main, master]
- pull_request:
-   branches: [main, master]
+  workflow_dispatch:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Checkout code
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Step 2: Configure AWS credentials
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -24,24 +22,20 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      # Step 3: Login to ECR
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      # Step 4: Build and push backend image
       - name: Build and Push Backend Image
         run: |
           docker build -t ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/semicon-backend:latest ./backend
           docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/semicon-backend:latest
 
-      # Step 5: Build and push frontend image
       - name: Build and Push Frontend Image
         run: |
-          docker build -t ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/frontend:latest ./dockerfiles/frontend.dockerfile
+          docker build -t ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/frontend:latest -f ./dockerfiles/frontend.dockerfile .
           docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/frontend:latest
 
-      # Step 6: SSH into EC2 and deploy containers
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v0.1.7
         with:
@@ -55,4 +49,3 @@ jobs:
             docker-compose pull
             docker-compose up -d --build
             docker system prune -f
-
