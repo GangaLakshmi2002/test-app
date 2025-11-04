@@ -53,7 +53,7 @@ HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 CMD wget 
 # Run the nextjs app
 CMD ["node", "server.js"]
 
-# Serve using Apache
-FROM httpd:2.4
-COPY --from=build /app/build/ /usr/local/apache2/htdocs/
-EXPOSE 80
+# # Serve using Apache
+# FROM httpd:2.4
+# COPY --from=build /app/build/ /usr/local/apache2/htdocs/
+# EXPOSE 80

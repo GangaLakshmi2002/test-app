@@ -43,9 +43,46 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
-            cd /home/ubuntu/test-app
-            git pull origin main
-            aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
+            PROJECT_DIR="/home/ubuntu/test-app"
+            ECR_URL="${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com"
+
+            echo "🔍 Checking if project directory exists..."
+            if [ ! -d "$PROJECT_DIR" ]; then
+              echo "📦 First-time setup: Cloning repository"
+              sudo apt update -y
+              sudo apt install -y docker.io docker-compose apache2 awscli git
+
+              echo "⚙️ Configuring Apache..."
+              sudo a2enmod proxy proxy_http
+              sudo bash -c 'cat > /etc/apache2/sites-available/000-default.conf <<EOF <VirtualHost *:80> ServerName ${SERVER_HOST} ProxyPreserveHost On ProxyPass /api http://localhost:5000/ ProxyPassReverse /api http://localhost:5000/ ProxyPass / http://localhost:80/  ProxyPassReverse / http://localhost:80/ </VirtualHost> EOF'
+              sudo systemctl restart apache2
+
+              echo "📂 Cloning project..."
+              git clone https://github.com/GangaLakshmi2002/test-app.git $PROJECT_DIR
+              
+            else
+              echo "✅ Project already exists, pulling latest changes"
+              cd $PROJECT_DIR && git pull origin main
+            fi
+
+            echo "🔑 Logging in to ECR..."
+            aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin $ECR_URL
+
+            echo "🚀 Deploying containers..."
+            cd $PROJECT_DIR
             docker-compose pull
             docker-compose up -d --build
+
+            echo "🧹 Cleaning unused Docker data..."
             docker system prune -f
+
+            echo "✅ Deployment complete!"
+
+
+          # script: |
+          #   cd /home/ubuntu/test-app
+          #   git pull origin main
+          #   aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
+          #   docker-compose pull
+          #   docker-compose up -d --build
+          #   docker system prune -f
