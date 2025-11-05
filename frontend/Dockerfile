@@ -21,7 +21,9 @@ COPY --from=base /app/node_modules ./node_modules
 COPY . .
 
 ARG ENVIRONMENT=production
-ARG NEXT_PUBLIC_API_URL="http://localhost:5000"
+#ARG NEXT_PUBLIC_API_URL="http://localhost:5000"
+ARG NEXT_PUBLIC_API_URL=http://backend:5000
+
 
 RUN if [ -f .env.${ENVIRONMENT} ]; then \
       echo "Using .env.${ENVIRONMENT}"; \
