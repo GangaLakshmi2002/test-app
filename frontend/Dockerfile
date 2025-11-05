@@ -22,7 +22,9 @@ COPY . .
 
 ARG ENVIRONMENT=production
 #ARG NEXT_PUBLIC_API_URL="http://localhost:5000"
-ARG NEXT_PUBLIC_API_URL=http://backend:5000
+# ARG NEXT_PUBLIC_API_URL=http://backend:5000
+ARG NEXT_PUBLIC_API_URL=http://54.235.10.7:5000
+
 
 
 RUN if [ -f .env.${ENVIRONMENT} ]; then \
