@@ -65,8 +65,6 @@ jobs:
             else
               echo "✅ Project already exists, pulling latest changes"
               cd $PROJECT_DIR && git pull origin main
-
-              sudo systemctl restart apache2
             fi
 
             echo "🔹 Checking & installing Docker if not present..."
@@ -89,7 +87,7 @@ jobs:
             fi
 
             echo "🔹 Checking Docker Compose plugin..."
-            if ! docker compose version &> /dev/null; then
+            if ! docker-compose version &> /dev/null; then
               echo "Installing Docker Compose plugin..."
               sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
               sudo chmod +x /usr/local/bin/docker-compose
