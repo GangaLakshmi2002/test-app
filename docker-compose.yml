@@ -31,9 +31,13 @@ services:
     image: postgres:13-alpine
     container_name: postgres
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-taskmanager}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-taskmanager}
-      POSTGRES_DB: ${POSTGRES_DB:-taskmanager}
+      POSTGRES_USER: taskmanager
+      POSTGRES_PASSWORD: taskmanager
+      POSTGRES_DB: taskmanager
+    # environment:
+    #   POSTGRES_USER: ${POSTGRES_USER:-taskmanager}
+    #   POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-taskmanager}
+    #   POSTGRES_DB: ${POSTGRES_DB:-taskmanager}
     ports:
       - '5432:5432'
     volumes:
