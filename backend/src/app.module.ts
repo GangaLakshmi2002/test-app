@@ -26,9 +26,9 @@ import { Task } from './tasks/task.entity';
       type: 'postgres',
       host: 'postgres', // service name in docker compose
       port: 5432,
-      username: 'taskmanager',
-      password: 'taskmanager',
-      database: 'taskmanager',
+      username:"taskmanager",
+      password:"taskmanager",
+      database:'taskmanager',
       entities: [Task], // Register the Task entity here
       synchronize: true, // For development only
     }),
