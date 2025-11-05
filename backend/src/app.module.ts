@@ -12,13 +12,23 @@ import { Task } from './tasks/task.entity';
       isGlobal: true,
       envFilePath: `.env.${process.env.NODE_ENV || 'development'}`, // Load .env based on NODE_ENV
     }),
+    // TypeOrmModule.forRoot({
+    //   type: 'postgres',
+    //   host: process.env.DATABASE_HOST,
+    //   port: parseInt(process.env.DATABASE_PORT, 10),
+    //   username: process.env.DATABASE_USER,
+    //   password: process.env.DATABASE_PASSWORD,
+    //   database: process.env.DATABASE_NAME,
+    //   entities: [Task], // Register the Task entity here
+    //   synchronize: true, // For development only
+    // }),
     TypeOrmModule.forRoot({
       type: 'postgres',
-      host: process.env.DATABASE_HOST,
-      port: parseInt(process.env.DATABASE_PORT, 10),
-      username: process.env.DATABASE_USER,
-      password: process.env.DATABASE_PASSWORD,
-      database: process.env.DATABASE_NAME,
+      host: '127.0.0.1',
+      port: 5432,
+      username: 'taskmanager',
+      password: 'taskmanager',
+      database: 'taskmanager',
       entities: [Task], // Register the Task entity here
       synchronize: true, // For development only
     }),
