@@ -24,7 +24,7 @@ import { Task } from './tasks/task.entity';
     // }),
     TypeOrmModule.forRoot({
       type: 'postgres',
-      host: '127.0.0.1',
+      host: 'postgres', // service name in docker compose
       port: 5432,
       username: 'taskmanager',
       password: 'taskmanager',
