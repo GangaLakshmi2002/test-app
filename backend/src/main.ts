@@ -11,7 +11,7 @@ async function bootstrap() {
     origin: [
       'http://localhost:3000',        // for local dev
       'http://frontend:3000',         // for Docker internal network
-      'http://54.235.10.7:3000'       // your EC2 public IP
+      'http://54.235.10.7'       // your EC2 public IP
     ],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
