@@ -6,6 +6,8 @@ import { AppModule } from './app.module';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+    app.setGlobalPrefix('api');
+
   // Enable CORS for multiple possible origins
   app.enableCors({
     origin: [
@@ -26,7 +28,7 @@ async function bootstrap() {
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, document);
+  SwaggerModule.setup('api/docs', app, document);
 
   await app.listen(5000, '0.0.0.0');  // bind to all interfaces inside container
 }

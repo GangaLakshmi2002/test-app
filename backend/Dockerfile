@@ -11,4 +11,4 @@ COPY . .
 # Expose backend port
 EXPOSE 5000
 
-CMD ["npm", "start:prod"]
+CMD ["npm", "run", "start:prod"]
