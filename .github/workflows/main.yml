@@ -65,13 +65,7 @@ jobs:
             else
               echo "✅ Project already exists, pulling latest changes"
               cd $PROJECT_DIR && git pull origin main
-              cd ..
-              sudo apt update -y
-              sudo apt install -y ca-certificates curl gnupg lsb-release awscli git apache2
 
-              echo "⚙️ Configuring Apache..."
-              sudo a2enmod proxy proxy_http
-              sudo bash -c 'cat > /etc/apache2/sites-available/000-default.conf <<EOF <VirtualHost *:80> ServerName ${SERVER_HOST} ProxyPreserveHost On ProxyPass /api http://localhost:5000/ ProxyPassReverse /api http://localhost:5000/ ProxyPass / http://localhost:80/ ProxyPassReverse / http://localhost:80/ </VirtualHost> EOF'
               sudo systemctl restart apache2
             fi
 
