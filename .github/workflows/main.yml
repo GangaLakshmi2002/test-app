@@ -81,12 +81,15 @@ jobs:
             if [ "$PROXY_ENABLED" -eq 0 ] || [ "$PROXY_HTTP_ENABLED" -eq 0 ]; then
               echo "⚙️ Enabling Apache proxy modules..."
               sudo a2enmod proxy proxy_http
+              echo "🔁 Reloading Apache to activate proxy modules..."
+              sudo systemctl reload apache2 || true
               MODULES_CHANGED=true
-              echo "✅ Proxy modules enabled"
+              echo "✅ Proxy modules enabled and reloaded"
             else
               echo "✅ Proxy modules already enabled"
-              MODULES_CHANGED=false
+               MODULES_CHANGED=false
             fi
+
 
             # NEW: Conditional VirtualHost Configuration
             echo "🔹 Checking Apache VirtualHost configuration..."
