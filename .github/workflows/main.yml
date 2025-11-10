@@ -72,15 +72,6 @@ jobs:
               echo "✅ Apache2 already installed"
             fi
 
-            echo "🔹 Checking Apache2 service status..."
-            if ! sudo systemctl is-active --quiet apache2; then
-              echo "🚀 Starting Apache2 service..."
-              sudo systemctl start apache2
-              sudo systemctl enable apache2
-              echo "✅ Apache2 service started and enabled"
-            else
-              echo "✅ Apache2 is already running"
-            fi
 
             # NEW: Conditional Apache Module Configuration
             echo "🔹 Checking Apache proxy modules..."
@@ -120,7 +111,7 @@ jobs:
               CustomLog \${APACHE_LOG_DIR}/access.log combined
               </VirtualHost>
               EOF"
-              
+
               VHOST_CHANGED=true
               echo "✅ VirtualHost configuration updated"
             else
@@ -128,23 +119,46 @@ jobs:
               VHOST_CHANGED=false
             fi
 
-            # ✅ NEW: Restart Apache only if configuration changed
-            if [ "$MODULES_CHANGED" = true ] || [ "$VHOST_CHANGED" = true ]; then
-              echo "🔄 Restarting Apache2 to apply changes..."
-              sudo systemctl restart apache2
-              echo "✅ Apache2 restarted successfully"
+            # ✅ Step 4: Validate configuration BEFORE restarting
+            echo "🔍 Validating Apache2 configuration..."
+            if sudo apache2ctl configtest 2>&1 | grep -q "Syntax OK"; then
+               echo "✅ Apache configuration is valid"
             else
-              echo "✅ No Apache configuration changes, restart skipped"
+               echo "❌ Apache configuration has errors:"
+               sudo apache2ctl configtest
+               echo "⚠️ Attempting to fix by reloading modules..."
+               sudo systemctl reload apache2
             fi
 
-            # ✅ NEW: Verify Apache is accessible
-            echo "🔍 Verifying Apache2 configuration..."
-            if sudo apache2ctl configtest 2>&1 | grep -q "Syntax OK"; then
-              echo "✅ Apache configuration is valid"
+             # ✅ Step 5: Start/Restart Apache only if needed
+             echo "🔹 Checking Apache2 service status..."
+
+            if ! sudo systemctl is-active --quiet apache2; then
+                echo "🚀 Starting Apache2 service..."
+                sudo systemctl start apache2
+                sudo systemctl enable apache2
+                echo "✅ Apache2 service started and enabled"
+            elif [ "$MODULES_CHANGED" = true ] || [ "$VHOST_CHANGED" = true ]; then
+                echo "🔄 Restarting Apache2 to apply changes..."
+                sudo systemctl restart apache2
+        
+              # Verify restart was successful
+                if sudo systemctl is-active --quiet apache2; then
+                   echo "✅ Apache2 restarted successfully"
+                else
+                   echo "❌ Apache2 failed to restart. Checking logs..."
+                   sudo journalctl -xeu apache2.service --no-pager | tail -20
+                   exit 1
+                fi
             else
-              echo "⚠️ Apache configuration has issues:"
-              sudo apache2ctl configtest
+               echo "✅ Apache2 is running, no changes needed"
             fi
+
+            # ✅ Final verification
+              echo "🔍 Final Apache status check..."
+              sudo systemctl status apache2 --no-pager || true
+              echo "📊 Enabled Apache modules:"
+              apache2ctl -M | grep proxy || echo "⚠️ No proxy modules found"
 
 
 
