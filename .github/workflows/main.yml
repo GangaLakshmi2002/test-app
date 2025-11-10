@@ -57,7 +57,16 @@ jobs:
 
               echo "⚙️ Configuring Apache..."
               sudo a2enmod proxy proxy_http
-              sudo bash -c 'cat > /etc/apache2/sites-available/000-default.conf <<EOF <VirtualHost *:80> ServerName ${SERVER_HOST} ProxyPreserveHost On ProxyPass /api http://localhost:5000/ ProxyPassReverse /api http://localhost:5000/ ProxyPass / http://localhost:80/ ProxyPassReverse / http://localhost:80/ </VirtualHost> EOF'
+              sudo bash -c 'cat > /etc/apache2/sites-available/000-default.conf <<EOF
+            <VirtualHost *:80>
+              ServerName ${{ secrets.SERVER_HOST }}
+              ProxyPreserveHost On
+              ProxyPass /api http://localhost:5000/
+              ProxyPassReverse /api http://localhost:5000/
+              ProxyPass / http://localhost:80/
+              ProxyPassReverse / http://localhost:80/
+            </VirtualHost>
+            EOF'
               sudo systemctl restart apache2
 
               echo "📂 Cloning project..."
@@ -67,30 +76,26 @@ jobs:
               cd $PROJECT_DIR && git pull origin main
             fi
 
-             #  ✅ NEW: Create Backend .env ONLY if it doesn't exist
-             if [ ! -f "$PROJECT_DIR/backend/.env" ]; then
-                echo "📝 Creating backend .env file (first time)..."
-                cat > $PROJECT_DIR/backend/.env <<EOF
-                       NODE_ENV=production
-                       JWT_SECRET=${{ secrets.JWT_SECRET }}
-                       PORT=5000
-                       EOF
+            if [ ! -f "$PROJECT_DIR/backend/.env" ]; then
+              echo "📝 Creating backend .env file (first time)..."
+              cat > $PROJECT_DIR/backend/.env <<'ENVEOF'
+            NODE_ENV=production
+            JWT_SECRET=${{ secrets.JWT_SECRET }}
+            PORT=5000
+            ENVEOF
             else
-                 echo "Backend .env already exists, skipping creation."
+              echo "✅ Backend .env already exists, skipping creation."
             fi
 
-            # ✅ NEW: Create Frontend .env ONLY if it doesn't exist
             if [ ! -f "$PROJECT_DIR/frontend/.env" ]; then
               echo "📝 Creating frontend .env file (first time)..."
-              cat > $PROJECT_DIR/frontend/.env <<EOF
-              NEXT_PUBLIC_API_BASE_URL=${{ secrets.NEXT_PUBLIC_API_BASE_URL }}
-              NODE_ENV=development
-              EOF
+              cat > $PROJECT_DIR/frontend/.env <<'ENVEOF'
+            NEXT_PUBLIC_API_BASE_URL=${{ secrets.NEXT_PUBLIC_API_BASE_URL }}
+            NODE_ENV=development
+            ENVEOF
             else
               echo "✅ Frontend .env already exists, skipping creation."
             fi
-
-
 
             echo "🔹 Checking & installing Docker if not present..."
             if ! command -v docker &> /dev/null; then
@@ -123,43 +128,35 @@ jobs:
             echo "🔑 Logging in to ECR..."
             aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin $ECR_URL
 
-             # ✅ TASK 1: Pre-deployment container cleanup
-             echo "🧹 Starting pre-deployment cleanup..."
-             cd $PROJECT_DIR
+            echo "🧹 Starting pre-deployment cleanup..."
+            cd $PROJECT_DIR
 
-            echo "Stopping and removing existing containers (preserving volumes)..."
-            if sudo docker compose ps -q 2>/dev/null | grep -q .; then
-               echo "🔍 Found running containers. Listing them:"
-               sudo docker compose ps
-        
-               echo "🛑 Stopping containers..."
-               sudo docker compose down 2>&1 | tee /tmp/docker-down.log
-        
-                if [ ${PIPESTATUS[0]} -eq 0 ]; then
-                  echo "✅ Containers stopped successfully"
-                else
-                  echo "⚠️ Warning during container stop (check logs):"
-                  cat /tmp/docker-down.log
-            fi
+            echo "📦 Stopping and removing existing containers (preserving volumes)..."
+            if sudo docker-compose ps -q 2>/dev/null | grep -q .; then
+              echo "🔍 Found running containers. Listing them:"
+              sudo docker-compose ps
+              echo "🛑 Stopping containers..."
+              sudo docker-compose down 2>&1 | tee /tmp/docker-down.log
+              if [ ${PIPESTATUS[0]} -eq 0 ]; then
+                echo "✅ Containers stopped successfully"
+              else
+                echo "⚠️ Warning during container stop (check logs):"
+                cat /tmp/docker-down.log
+              fi
             else
-                echo "✅ No existing containers found, skipping docker compose down"
+              echo "✅ No existing containers found, skipping docker-compose down"
             fi
 
- 
             echo "🗑️ Removing dangling images and stopped containers..."
             PRUNE_OUTPUT=$(sudo docker system prune -f 2>&1)
             echo "$PRUNE_OUTPUT"
-      
-     
             RECLAIMED=$(echo "$PRUNE_OUTPUT" | grep -oP 'Total reclaimed space: \K.*' || echo "0B")
             echo "📊 Cleanup stats: Reclaimed $RECLAIMED of disk space"
-      
-    
+
             echo "🔍 Verifying data volumes are preserved..."
             VOLUME_COUNT=$(sudo docker volume ls -q | wc -l)
             echo "📦 Data volumes preserved: $VOLUME_COUNT volume(s) remain"
 
-    
             echo "📊 Current Docker state before deployment:"
             echo "  Images: $(sudo docker images -q | wc -l)"
             echo "  Containers: $(sudo docker ps -a -q | wc -l)"
@@ -171,10 +168,10 @@ jobs:
             sudo DOCKER_CONFIG=/home/ubuntu/.docker docker-compose up -d --build
 
             echo "📊 Post-deployment Docker state:"
-            sudo docker compose ps
+            sudo docker-compose ps
             echo "  Running containers: $(sudo docker ps -q | wc -l)"
 
-            echo "🧹 Cleaning unused Docker data..."
+            echo "🧹 Final cleanup of unused Docker data..."
             sudo docker system prune -f
 
             echo "✅ Deployment complete!"
