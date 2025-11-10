@@ -73,77 +73,143 @@ jobs:
             fi
 
 
-            # NEW: Conditional Apache Module Configuration
-            echo "🔹 Checking Apache proxy modules..."
-            PROXY_ENABLED=$(apache2ctl -M 2>/dev/null | grep -c "proxy_module" || echo "0")
-            PROXY_HTTP_ENABLED=$(apache2ctl -M 2>/dev/null | grep -c "proxy_http_module" || echo "0")
-
-            if [ "$PROXY_ENABLED" -eq 0 ] || [ "$PROXY_HTTP_ENABLED" -eq 0 ]; then
-              echo "⚙️ Enabling Apache proxy modules..."
-              sudo a2enmod proxy proxy_http
-              echo "🔁 Reloading Apache to activate proxy modules..."
-              sudo systemctl reload apache2 || true
-              MODULES_CHANGED=true
-              echo "✅ Proxy modules enabled and reloaded"
+            echo "🔹 Checking Apache2 installation..."
+            if ! command -v apache2 &> /dev/null; then
+               echo "📦 Installing Apache2..."
+               sudo apt update -y
+               sudo apt install -y apache2
+               echo "✅ Apache2 installed successfully"
             else
-              echo "✅ Proxy modules already enabled"
-               MODULES_CHANGED=false
+               echo "✅ Apache2 already installed"
             fi
 
+            # --- Enable Required Modules ---
+            echo "🔹 Ensuring Apache proxy modules are enabled..."
+            sudo a2enmod proxy proxy_http headers rewrite >/dev/null 2>&1 || true
 
-            # NEW: Conditional VirtualHost Configuration
-            echo "🔹 Checking Apache VirtualHost configuration..."
+            # --- Write Valid VirtualHost File ---
             VHOST_FILE="/etc/apache2/sites-available/000-default.conf"
-            
-            if ! grep -q "ProxyPass /api" "$VHOST_FILE" 2>/dev/null; then
-              echo "⚙️ Configuring Apache VirtualHost for reverse proxy..."
-              sudo bash -c "cat > $VHOST_FILE <<'EOF'
-              <VirtualHost *:80>
-              ServerName ${{ secrets.SERVER_HOST }}
-              ProxyPreserveHost On
-  
-              # Backend API proxy
-              ProxyPass /api http://localhost:5000/
-              ProxyPassReverse /api http://localhost:5000/
-  
-              # Frontend proxy
-              ProxyPass / http://localhost:80/
-              ProxyPassReverse / http://localhost:80/
-  
-              ErrorLog \${APACHE_LOG_DIR}/error.log
-              CustomLog \${APACHE_LOG_DIR}/access.log combined
-              </VirtualHost>
-              EOF"
 
-              VHOST_CHANGED=true
-              echo "✅ VirtualHost configuration updated"
-            else
-              echo "✅ VirtualHost already configured with proxy rules"
-              VHOST_CHANGED=false
-            fi
+            echo "🔹 Configuring Apache VirtualHost..."
+            sudo tee $VHOST_FILE >/dev/null <<EOF
+            <VirtualHost *:80>
+             ServerName ${HOSTNAME}
 
-            # ✅ Step 4: Validate configuration BEFORE restarting
-            echo "🔍 Validating Apache2 configuration..."
+            # Keep host header for backend
+            ProxyPreserveHost On
+
+            # Backend API
+            ProxyPass /api http://localhost:5000/
+            ProxyPassReverse /api http://localhost:5000/
+
+            # Frontend (served from Docker or static files)
+            ProxyPass / http://localhost:3000/
+            ProxyPassReverse / http://localhost:3000/
+
+            ErrorLog \${APACHE_LOG_DIR}/error.log
+            CustomLog \${APACHE_LOG_DIR}/access.log combined
+            </VirtualHost>
+            EOF
+
+            # --- Validate Configuration ---
+            echo "🔍 Validating Apache configuration..."
             if sudo apache2ctl configtest 2>&1 | grep -q "Syntax OK"; then
                echo "✅ Apache configuration is valid"
             else
-               echo "❌ Apache configuration has errors:"
+               echo "❌ Apache configuration invalid:"
                sudo apache2ctl configtest
-               echo "⚠️ Attempting to fix by reloading modules..."
-               sudo systemctl reload apache2
+               exit 1
             fi
 
-             # ✅ Step 5: Start/Restart Apache only if needed
-             echo "🔹 Checking Apache2 service status..."
+            # --- Restart Apache ---
+            echo "🔁 Restarting Apache service..."
+            sudo systemctl daemon-reload
+            sudo systemctl restart apache2
 
-            if ! sudo systemctl is-active --quiet apache2; then
-                echo "🚀 Starting Apache2 service..."
-                sudo systemctl start apache2
-                sudo systemctl enable apache2
-                echo "✅ Apache2 service started and enabled"
-            elif [ "$MODULES_CHANGED" = true ] || [ "$VHOST_CHANGED" = true ]; then
-                echo "🔄 Restarting Apache2 to apply changes..."
-                sudo systemctl restart apache2
+            if sudo systemctl is-active --quiet apache2; then
+              echo "✅ Apache is running and configured properly"
+            else
+              echo "❌ Apache failed to start, showing last 20 log lines..."
+              sudo journalctl -xeu apache2.service --no-pager | tail -20
+              exit 1
+            fi
+
+            echo "📊 Enabled Apache modules:"
+            apache2ctl -M | grep proxy || echo "⚠️ Proxy modules not found"
+
+
+
+            # # NEW: Conditional Apache Module Configuration
+            # echo "🔹 Checking Apache proxy modules..."
+            # PROXY_ENABLED=$(apache2ctl -M 2>/dev/null | grep -c "proxy_module" || echo "0")
+            # PROXY_HTTP_ENABLED=$(apache2ctl -M 2>/dev/null | grep -c "proxy_http_module" || echo "0")
+
+            # if [ "$PROXY_ENABLED" -eq 0 ] || [ "$PROXY_HTTP_ENABLED" -eq 0 ]; then
+            #   echo "⚙️ Enabling Apache proxy modules..."
+            #   sudo a2enmod proxy proxy_http
+            #   echo "🔁 Reloading Apache to activate proxy modules..."
+            #   sudo systemctl reload apache2 || true
+            #   MODULES_CHANGED=true
+            #   echo "✅ Proxy modules enabled and reloaded"
+            # else
+            #   echo "✅ Proxy modules already enabled"
+            #    MODULES_CHANGED=false
+            # fi
+
+
+            # # NEW: Conditional VirtualHost Configuration
+            # echo "🔹 Checking Apache VirtualHost configuration..."
+            # VHOST_FILE="/etc/apache2/sites-available/000-default.conf"
+            
+            # if ! grep -q "ProxyPass /api" "$VHOST_FILE" 2>/dev/null; then
+            #   echo "⚙️ Configuring Apache VirtualHost for reverse proxy..."
+            #   sudo bash -c "cat > $VHOST_FILE <<'EOF'
+            #   <VirtualHost *:80>
+            #   ServerName ${{ secrets.SERVER_HOST }}
+            #   ProxyPreserveHost On
+  
+            #   # Backend API proxy
+            #   ProxyPass /api http://localhost:5000/
+            #   ProxyPassReverse /api http://localhost:5000/
+  
+            #   # Frontend proxy
+            #   ProxyPass / http://localhost:80/
+            #   ProxyPassReverse / http://localhost:80/
+  
+            #   ErrorLog \${APACHE_LOG_DIR}/error.log
+            #   CustomLog \${APACHE_LOG_DIR}/access.log combined
+            #   </VirtualHost>
+            #   EOF"
+
+            #   VHOST_CHANGED=true
+            #   echo "✅ VirtualHost configuration updated"
+            # else
+            #   echo "✅ VirtualHost already configured with proxy rules"
+            #   VHOST_CHANGED=false
+            # fi
+
+            # # ✅ Step 4: Validate configuration BEFORE restarting
+            # echo "🔍 Validating Apache2 configuration..."
+            # if sudo apache2ctl configtest 2>&1 | grep -q "Syntax OK"; then
+            #    echo "✅ Apache configuration is valid"
+            # else
+            #    echo "❌ Apache configuration has errors:"
+            #    sudo apache2ctl configtest
+            #    echo "⚠️ Attempting to fix by reloading modules..."
+            #    sudo systemctl reload apache2
+            # fi
+
+            #  # ✅ Step 5: Start/Restart Apache only if needed
+            #  echo "🔹 Checking Apache2 service status..."
+
+            # if ! sudo systemctl is-active --quiet apache2; then
+            #     echo "🚀 Starting Apache2 service..."
+            #     sudo systemctl start apache2
+            #     sudo systemctl enable apache2
+            #     echo "✅ Apache2 service started and enabled"
+            # elif [ "$MODULES_CHANGED" = true ] || [ "$VHOST_CHANGED" = true ]; then
+            #     echo "🔄 Restarting Apache2 to apply changes..."
+            #     sudo systemctl restart apache2
         
               # Verify restart was successful
                 if sudo systemctl is-active --quiet apache2; then
