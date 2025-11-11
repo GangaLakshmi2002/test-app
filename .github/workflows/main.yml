@@ -245,19 +245,18 @@ jobs:
             if ! aws sts get-caller-identity >/dev/null 2>&1; then
                echo "ERROR: No AWS credentials on EC2. Attach an EC2 IAM role with ECR permissions." && exit 1
             fi
-            # if ! aws ecr describe-repositories --region "$AWS_REGION" >/dev/null 2>&1; then
-            #    echo "ERROR: IAM role lacks ECR ECR permissions (describe/pull/push)." && exit 1
-            # fi
+
+            echo "🔑 Logging in to ECR..."
+            aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | sudo docker login --username AWS --password-stdin $ECR_URL
 
             # ----- ECR auth for Docker (use sudo if docker-compose uses sudo) -----
-            if aws ecr get-login-password --region "$AWS_REGION" | sudo docker login --username AWS --password-stdin "$ECR_URL"; then
+            if aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | sudo docker login --username AWS --password-stdin "$ECR_URL"; then
               echo "✅ ECR login OK: $ECR_URL"
             else
               echo "❌ ECR login failed: $ECR_URL" && exit 1
             fi
 
-            echo "🔑 Logging in to ECR..."
-            aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin $ECR_URL
+           
 
             echo "🧹 Starting pre-deployment cleanup..."
             cd $PROJECT_DIR
