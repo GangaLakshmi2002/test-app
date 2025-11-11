@@ -233,26 +233,26 @@ jobs:
             if ! command -v aws &> /dev/null; then
               echo "📦 Installing AWS CLI..."
               sudo apt-get update -y
-              sudo apt-get install -y awscli
+              sudo apt  install awscli
               echo "✅ AWS CLI installed."
             else
               echo "✅ AWS CLI already installed."
             fi
 
-             echo "🔧 Configuring AWS credentials..."
-             mkdir -p ~/.aws
-             cat > ~/.aws/credentials <<EOF
+            echo "🔧 Configuring AWS credentials..."
+            mkdir -p ~/.aws
+            cat > ~/.aws/credentials <<EOF
                    [default]
                    aws_access_key_id=${{ secrets.AWS_ACCESS_KEY_ID }}
                    aws_secret_access_key=${{ secrets.AWS_SECRET_ACCESS_KEY }}
-                  EOF
+            EOF
 
 
             cat > ~/.aws/config <<EOF
                   [default]
                   region=${{ secrets.AWS_REGION }}
                   output=json
-                EOF
+            EOF
 
             echo "✅ AWS CLI configured successfully."
 
