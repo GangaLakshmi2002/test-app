@@ -153,6 +153,31 @@ jobs:
               echo "🔍 Final Apache status check..."
               sudo systemctl status apache2 --no-pager || true
 
+            # ✅ Create project root .env file (for docker-compose and shared config)
+            if [ ! -f "$PROJECT_DIR/.env" ]; then
+               echo "📝 Creating project root .env file (first time)..."
+               cat > $PROJECT_DIR/.env <<'ENVEOF'
+                   # AWS Configuration
+                     AWS_ACCOUNT_ID=${{ secrets.AWS_ACCOUNT_ID }}
+                     AWS_REGION=${{ secrets.AWS_REGION }}
+                     IMAGE_TAG=latest
+
+                   # Database credentials for PostgreSQL container
+                     POSTGRES_USER=taskmanager
+                     POSTGRES_PASSWORD=taskmanager
+                     POSTGRES_DB=taskmanager
+
+                   # Database connection for backend application
+                     DATABASE_HOST=127.0.0.1
+                     DATABASE_PORT=5432
+                     DATABASE_USER=postgres
+                     DATABASE_PASSWORD=postgres111
+                     DATABASE_NAME=tasks
+                ENVEOF
+                echo "✅ Project root .env file created"
+            else
+                echo "✅ Project root .env already exists, skipping creation."
+            fi
 
 
             if [ ! -f "$PROJECT_DIR/backend/.env" ]; then
@@ -203,6 +228,33 @@ jobs:
             else
               echo "✅ Docker Compose already available."
             fi
+
+            echo "🔹 Checking AWS CLI installation..."
+            if ! command -v aws &> /dev/null; then
+              echo "📦 Installing AWS CLI..."
+              sudo apt-get update -y
+              sudo apt-get install -y awscli
+              echo "✅ AWS CLI installed."
+            else
+              echo "✅ AWS CLI already installed."
+            fi
+
+             echo "🔧 Configuring AWS credentials..."
+             mkdir -p ~/.aws
+             cat > ~/.aws/credentials <<EOF
+                   [default]
+                   aws_access_key_id=${{ secrets.AWS_ACCESS_KEY_ID }}
+                   aws_secret_access_key=${{ secrets.AWS_SECRET_ACCESS_KEY }}
+                  EOF
+
+
+            cat > ~/.aws/config <<EOF
+                  [default]
+                  region=${{ secrets.AWS_REGION }}
+                  output=json
+                EOF
+
+            echo "✅ AWS CLI configured successfully."
 
             echo "🔑 Logging in to ECR..."
             aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin $ECR_URL
