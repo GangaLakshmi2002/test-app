@@ -178,23 +178,7 @@ jobs:
             else
                 echo "✅ Project root .env already exists, skipping creation."
             fi
-
-
-            if [ ! -f "$PROJECT_DIR/backend/.env" ]; then
-              echo "📝 Creating backend .env (first time or empty)..."
-              cat > "$PROJECT_DIR/backend/.env" <<EOF
-                     NODE_ENV=production
-                     JWT_SECRET=${{ secrets.JWT_SECRET }}
-                     PORT=5000
-              EOF
-              cp "$PROJECT_DIR/backend/.env" "$PROJECT_DIR/backend/.env.production"
-              echo "✅ Wrote: $PROJECT_DIR/backend/.env and .env.production"
-
-            else
-              SIZE=$(wc -c < "$PROJECT_DIR/backend/.env" 2>/dev/null || echo 0)
-              echo "✅ Backend .env already exists, skipping creation."
-            fi
-
+            
             if [ ! -f "$PROJECT_DIR/frontend/.env" ]; then
               echo "📝 Creating frontend .env file (first time)..."
               cat > "$PROJECT_DIR/frontend/.env" <<'ENVEOF'
@@ -204,6 +188,24 @@ jobs:
             else
               echo "✅ Frontend .env already exists, skipping creation."
             fi
+
+            if [ ! -f "$PROJECT_DIR/backend/.env" ]; then
+              echo "📝 Creating backend .env (first time or empty)..."
+              cat > "$PROJECT_DIR/backend/.env" <<EOF
+            NODE_ENV=production
+            JWT_SECRET=${{ secrets.JWT_SECRET }}
+            PORT=5000
+            EOF
+              chmod 600 "$PROJECT_DIR/backend/.env" || true
+              cp "$PROJECT_DIR/backend/.env" "$PROJECT_DIR/backend/.env.production"
+              echo "✅ Wrote: $PROJECT_DIR/backend/.env and .env.production"
+
+            else
+              SIZE=$(wc -c < "$PROJECT_DIR/backend/.env" 2>/dev/null || echo 0)
+              echo "✅ Backend .env already exists, skipping creation."
+            fi
+
+            
 
             echo "🔹 Checking & installing Docker if not present..."
             if ! command -v docker &> /dev/null; then
