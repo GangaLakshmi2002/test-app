@@ -247,6 +247,25 @@ jobs:
             fi
             echo "AWS CLI: $(aws --version)"
 
+             # ---------- Configure AWS credentials (from GitHub Secrets) ----------
+            echo "🔐 Configuring AWS credentials..."
+            mkdir -p ~/.aws
+
+            cat > ~/.aws/credentials <<EOF
+            [default]
+            aws_access_key_id=${{ secrets.AWS_ACCESS_KEY_ID }}
+            aws_secret_access_key=${{ secrets.AWS_SECRET_ACCESS_KEY }}
+            EOF
+
+            cat > ~/.aws/config <<EOF
+            [default]
+            region=${{ secrets.AWS_REGION }}
+            output=json
+            EOF
+
+            chmod 600 ~/.aws/credentials ~/.aws/config
+            echo "✅ AWS CLI configured successfully"
+
 
             echo "🔑 Logging in to ECR..."
             aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | sudo docker login --username AWS --password-stdin $ECR_URL
