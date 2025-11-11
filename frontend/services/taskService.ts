@@ -7,7 +7,7 @@ export interface Task {
   status: 'PENDING' | 'IN_PROGRESS' | 'DONE';
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://54.145.6.120:5000/api'; 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://54.227.120.10:5000/api'; 
 // const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/api';
  
 
