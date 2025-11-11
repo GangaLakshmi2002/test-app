@@ -181,12 +181,12 @@ jobs:
 
 
             if [ ! -f "$PROJECT_DIR/backend/.env" ]; then
-               echo "📝 Creating backend .env (first time or empty)..."
-               cat > "$PROJECT_DIR/backend/.env" <<'ENVEOF'
-                      NODE_ENV=production
-                      JWT_SECRET=${{ secrets.JWT_SECRET }}
-                      PORT=5000
-              ENVEOF
+              echo "📝 Creating backend .env (first time or empty)..."
+              cat > "$PROJECT_DIR/backend/.env" <<EOF
+                     NODE_ENV=production
+                     JWT_SECRET=${{ secrets.JWT_SECRET }}
+                     PORT=5000
+              EOF
               cp "$PROJECT_DIR/backend/.env" "$PROJECT_DIR/backend/.env.production"
               echo "✅ Wrote: $PROJECT_DIR/backend/.env and .env.production"
 
