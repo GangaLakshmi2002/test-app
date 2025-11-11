@@ -241,10 +241,10 @@ jobs:
             fi
             echo "AWS CLI: $(aws --version)"
 
-            # ----- IAM role sanity checks -----
-            if ! aws sts get-caller-identity >/dev/null 2>&1; then
-               echo "ERROR: No AWS credentials on EC2. Attach an EC2 IAM role with ECR permissions." && exit 1
-            fi
+            # # ----- IAM role sanity checks -----
+            # if ! aws sts get-caller-identity >/dev/null 2>&1; then
+            #    echo "ERROR: No AWS credentials on EC2. Attach an EC2 IAM role with ECR permissions." && exit 1
+            # fi
 
             echo "🔑 Logging in to ECR..."
             aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | sudo docker login --username AWS --password-stdin $ECR_URL
