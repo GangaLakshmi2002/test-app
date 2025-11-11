@@ -197,7 +197,7 @@ jobs:
 
             if [ ! -f "$PROJECT_DIR/frontend/.env" ]; then
               echo "📝 Creating frontend .env file (first time)..."
-              cat > $PROJECT_DIR/frontend/.env <<'ENVEOF'
+              cat > "$PROJECT_DIR/frontend/.env" <<'ENVEOF'
             NEXT_PUBLIC_API_BASE_URL=${{ secrets.NEXT_PUBLIC_API_BASE_URL }}
             NODE_ENV=development
             ENVEOF
